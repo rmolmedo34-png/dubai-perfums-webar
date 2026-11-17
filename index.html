@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#090909">
+  <title>DUBAI PERFUMS | Experiencia WebAR</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <style>
+    *{box-sizing:border-box} html,body{margin:0;width:100%;height:100%;background:#080808;color:#f5f1e9;font-family:Montserrat,Arial,sans-serif}
+    .screen{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 22px;text-align:center;background:radial-gradient(ellipse at 50% 30%,#29251f 0,#111 42%,#050505 100%)}
+    .brand{font-family:"Cormorant Garamond",serif;font-size:clamp(38px,10vw,58px);letter-spacing:.16em;margin:0;color:#eee7d8}
+    .sub{font-size:10px;letter-spacing:.38em;color:#b6a98e;margin:7px 0 34px}
+    .rule{width:62px;height:1px;background:#a98c5c;margin:0 auto 28px}
+    p{max-width:330px;color:#c9c2b6;font-size:13px;line-height:1.8}
+    button{margin-top:24px;border:1px solid #b69a6b;background:transparent;color:#f3e8d3;padding:16px 26px;min-height:50px;letter-spacing:.16em;font-size:11px;border-radius:2px}
+    .hint{font-size:10px;color:#8f887c;margin-top:22px}
+    #ar{display:none;position:fixed;inset:0;background:#000}
+    #ar video{display:none}
+    #status{position:fixed;z-index:20;top:18px;left:16px;right:16px;text-align:center;background:#090909bb;padding:12px;border:1px solid #9b8054;color:#eee;font-size:11px;letter-spacing:.08em}
+    #videoLayer{display:none;position:fixed;z-index:30;inset:0;background:#000;align-items:center;justify-content:center}
+    #promo{width:100%;height:100%;object-fit:contain;background:#000}
+    #close{position:absolute;top:18px;right:16px;z-index:31;margin:0;background:#111c;border-color:#b69a6b;padding:12px 16px}
+    .small{font-size:10px;color:#999;margin-top:16px}
+  </style>
+</head>
+<body>
+  <main id="welcome" class="screen">
+    <h1 class="brand">DUBAI</h1><div class="sub">PERFUMS · THE SECRET SOCIETY</div>
+    <div class="rule"></div>
+    <p>Una experiencia exclusiva te espera.<br>Presiona iniciar y enfoca la etiqueta de tu fragancia.</p>
+    <button id="start">INICIAR EXPERIENCIA</button>
+    <div class="hint">Permite el acceso a la cámara cuando tu navegador lo solicite.</div>
+  </main>
+
+  <section id="ar">
+    <div id="status">BUSCANDO LA ETIQUETA DUBAI-001…</div>
+    <a-scene mindar-image="imageTargetSrc: targets/dubai-001.mind; autoStart: true; uiScanning: false; uiLoading: no; filterMinCF: 0.0001; filterBeta: 0.001" embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+      <a-assets><video id="promoAsset" src="assets/dubai-001.mp4" preload="auto" loop="false" playsinline webkit-playsinline crossorigin="anonymous"></video></a-assets>
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+      <a-entity mindar-image-target="targetIndex: 0" id="target">
+        <a-plane color="#000" opacity="0" position="0 0 0" width="1" height="1.777"></a-plane>
+      </a-entity>
+    </a-scene>
+  </section>
+
+  <div id="videoLayer"><video id="promo" src="assets/dubai-001.mp4" playsinline webkit-playsinline controls></video><button id="close">CERRAR ✕</button></div>
+
+  <script>
+    const welcome=document.getElementById('welcome'), ar=document.getElementById('ar');
+    const statusBox=document.getElementById('status'), layer=document.getElementById('videoLayer');
+    const promo=document.getElementById('promo'), target=document.getElementById('target');
+    let opened=false;
+    document.getElementById('start').addEventListener('click', async()=>{
+      welcome.style.display='none'; ar.style.display='block';
+      try {
+        const scene=document.querySelector('a-scene');
+        scene.addEventListener('arReady',()=>statusBox.textContent='ENFOCA LA ETIQUETA DEL PERFUME');
+        scene.addEventListener('arError',(e)=>{statusBox.textContent='No se pudo iniciar la cámara. Revisa los permisos del navegador.';});
+      } catch(e) { statusBox.textContent='No se pudo iniciar la experiencia.'; }
+    });
+    target.addEventListener('targetFound', async()=>{
+      if(opened) return; opened=true;
+      layer.style.display='flex'; statusBox.textContent='ETIQUETA RECONOCIDA';
+      try { await promo.play(); }
+      catch(e) { promo.controls=true; statusBox.textContent='Toca reproducir para iniciar el video con sonido.'; }
+    });
+    target.addEventListener('targetLost',()=>{ if(!opened) statusBox.textContent='BUSCANDO LA ETIQUETA DUBAI-001…'; });
+    document.getElementById('close').addEventListener('click',()=>{
+      promo.pause(); promo.currentTime=0; layer.style.display='none'; opened=false;
+    });
+    promo.addEventListener('ended',()=>{layer.style.display='none';opened=false;});
+  </script>
+</body>
+</html>
